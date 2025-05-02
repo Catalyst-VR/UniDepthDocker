@@ -13,3 +13,6 @@ ___*.py
 **/build/
 **/dist/
 **/*.egg-info/
+
+.venv/
+models/

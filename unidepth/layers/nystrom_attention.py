@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
-from xformers.components.attention import NystromAttention
 
 from .attention import AttentionBlock
 
@@ -31,9 +30,7 @@ class NystromBlock(AttentionBlock):
             layer_scale=layer_scale,
             context_dim=context_dim,
         )
-        self.attention_fn = NystromAttention(
-            num_landmarks=128, num_heads=num_heads, dropout=dropout
-        )
+        self.attention_fn = NystromAttention(num_landmarks=128, num_heads=num_heads, dropout=dropout)
 
     def attn(
         self,
@@ -46,9 +43,7 @@ class NystromBlock(AttentionBlock):
     ) -> torch.Tensor:
         x = self.norm_attnx(x)
         context = self.norm_attnctx(context)
-        k, v = rearrange(
-            self.kv(context), "b n (kv h d) -> b n h d kv", h=self.num_heads, kv=2
-        ).unbind(dim=-1)
+        k, v = rearrange(self.kv(context), "b n (kv h d) -> b n h d kv", h=self.num_heads, kv=2).unbind(dim=-1)
         q = rearrange(self.q(x), "b n (h d) -> b n h d", h=self.num_heads)
 
         if rope is not None:
@@ -56,14 +51,10 @@ class NystromBlock(AttentionBlock):
             k = rope(k)
         else:
             if pos_embed is not None:
-                pos_embed = rearrange(
-                    pos_embed, "b n (h d) -> b n h d", h=self.num_heads
-                )
+                pos_embed = rearrange(pos_embed, "b n (h d) -> b n h d", h=self.num_heads)
                 q = q + pos_embed
             if pos_embed_context is not None:
-                pos_embed_context = rearrange(
-                    pos_embed_context, "b n (h d) -> b n h d", h=self.num_heads
-                )
+                pos_embed_context = rearrange(pos_embed_context, "b n (h d) -> b n h d", h=self.num_heads)
                 k = k + pos_embed_context
 
         if self.cosine:
